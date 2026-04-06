@@ -1,0 +1,569 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0a; --surface: #111; --border: #222; --accent: #e8c84a;
+    --accent2: #ff4b4b; --text: #f0ede6; --muted: #666; --green: #3dd68c;
+    --mono: 'Space Mono', monospace; --display: 'Bebas Neue', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; padding: 0; }
+  #app { max-width: 640px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+  .header-bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+  .logo { font-family: var(--display); font-size: 26px; letter-spacing: 3px; color: var(--accent); }
+  .streak-pill { background: #1a1a1a; border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  .streak-pill span { color: var(--accent); font-weight: 700; }
+  .xp-bar-wrap { background: #1a1a1a; border: 1px solid var(--border); border-radius: 3px; height: 4px; margin-bottom: 2rem; overflow: hidden; }
+  .xp-bar-fill { height: 100%; background: var(--accent); transition: width 0.6s ease; }
+  .rank-line { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 0.5rem; text-transform: uppercase; }
+  #setup-screen, #countdown-screen, #session-screen, #abort-screen, #complete-screen { display: none; }
+  .active { display: block !important; }
+  .directive-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+  .field-group { margin-bottom: 1.5rem; }
+  textarea, input[type="text"] { width: 100%; background: #111; border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 12px; border-radius: 4px; resize: none; outline: none; transition: border-color 0.2s; line-height: 1.6; }
+  textarea:focus, input[type="text"]:focus { border-color: var(--accent); }
+  .measure-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .duration-options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dur-btn { background: #1a1a1a; border: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 8px 14px; border-radius: 3px; cursor: pointer; letter-spacing: 1px; transition: all 0.15s; }
+  .dur-btn:hover, .dur-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(232,200,74,0.07); }
+  .constraints-box { background: #111; border: 1px solid #1e1e1e; border-left: 3px solid var(--accent2); border-radius: 3px; padding: 14px; margin-bottom: 1.5rem; }
+  .constraints-box .c-title { font-size: 10px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; margin-bottom: 10px; }
+  .constraint-item { font-size: 12px; color: var(--muted); padding: 4px 0; display: flex; gap: 10px; }
+  .constraint-item::before { content: '▸'; color: var(--accent2); flex-shrink: 0; }
+  .execute-btn { width: 100%; background: var(--accent); color: #0a0a0a; border: none; font-family: var(--display); font-size: 22px; letter-spacing: 4px; padding: 16px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+  .execute-btn:hover { background: #f5d660; transform: translateY(-1px); }
+  .execute-btn:active { transform: scale(0.98); }
+  #countdown-screen { text-align: center; padding: 3rem 0; }
+  .countdown-num { font-family: var(--display); font-size: 160px; color: var(--accent); line-height: 1; animation: pulse-count 0.9s ease-in-out infinite; }
+  @keyframes pulse-count { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .countdown-label { font-size: 11px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; margin-top: 1rem; }
+  .session-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .mission-tag { font-size: 10px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; margin-bottom: 4px; }
+  .mission-text { font-size: 13px; color: var(--text); max-width: 340px; line-height: 1.6; }
+  .sessions-done { font-size: 11px; color: var(--muted); text-align: right; }
+  .sessions-done span { font-size: 20px; font-family: var(--display); color: var(--text); display: block; }
+  .timer-wrap { text-align: center; margin: 1.5rem 0 2rem; }
+  .timer-display { font-family: var(--display); font-size: 108px; letter-spacing: 6px; line-height: 1; color: var(--text); transition: color 0.3s; }
+  .timer-display.warning { color: var(--accent); }
+  .timer-display.critical { color: var(--accent2); }
+  .phase-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+  .session-controls { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+  .ctrl-btn { flex: 1; background: #1a1a1a; border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 12px; letter-spacing: 1px; padding: 12px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+  .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .abort-btn { flex: 0.5; color: var(--accent2); border-color: #2a1414; }
+  .abort-btn:hover { border-color: var(--accent2) !important; color: var(--accent2) !important; }
+  .rules-reminder { background: #111; border: 1px solid var(--border); border-radius: 3px; padding: 12px; }
+  .rules-reminder .r { font-size: 11px; color: var(--muted); display: flex; gap: 8px; padding: 3px 0; letter-spacing: 0.5px; }
+  .rules-reminder .r .dot { color: var(--accent); flex-shrink: 0; }
+  #abort-screen { text-align: center; padding: 3rem 0; }
+  .abort-big { font-family: var(--display); font-size: 56px; color: var(--accent2); letter-spacing: 4px; margin-bottom: 1rem; }
+  .abort-sub { font-size: 12px; color: var(--muted); letter-spacing: 1px; line-height: 2; margin-bottom: 2rem; }
+  .penalty-box { background: rgba(255,75,75,0.07); border: 1px solid #2a1414; border-radius: 4px; padding: 16px; margin-bottom: 2rem; font-size: 12px; color: #cc4444; letter-spacing: 1px; line-height: 1.8; }
+  .restart-btn { width: 100%; background: var(--accent2); color: #fff; border: none; font-family: var(--display); font-size: 20px; letter-spacing: 3px; padding: 15px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+  .restart-btn:hover { opacity: 0.85; }
+  #complete-screen { text-align: center; padding: 2rem 0; }
+  .complete-big { font-family: var(--display); font-size: 54px; color: var(--green); letter-spacing: 3px; margin-bottom: 0.5rem; }
+  .xp-gained { font-size: 13px; color: var(--accent); letter-spacing: 2px; margin-bottom: 2rem; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 2rem; }
+  .stat-card { background: #111; border: 1px solid var(--border); border-radius: 4px; padding: 14px 10px; }
+  .stat-val { font-family: var(--display); font-size: 32px; color: var(--text); letter-spacing: 2px; }
+  .stat-label { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+  .next-actions { display: flex; gap: 10px; flex-direction: column; }
+  .next-btn { width: 100%; background: #1a1a1a; border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 12px; letter-spacing: 1px; padding: 12px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+  .next-btn:hover { border-color: var(--green); color: var(--green); }
+  .next-btn.primary { background: var(--green); color: #0a0a0a; border-color: var(--green); font-weight: 700; }
+  .next-btn.primary:hover { opacity: 0.85; color: #0a0a0a; }
+  .break-timer { font-family: var(--display); font-size: 64px; color: var(--green); letter-spacing: 4px; margin: 1.5rem 0; }
+  .break-label { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid var(--accent); border-radius: 3px; padding: 10px 20px; font-size: 12px; letter-spacing: 1px; color: var(--accent); opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; z-index: 100; }
+  .toast.visible { opacity: 1; }
+  .error-msg { font-size: 11px; color: var(--accent2); letter-spacing: 1px; margin-top: 6px; min-height: 16px; }
+  .break-screen { text-align: center; padding: 2rem 0; }
+  .paused-badge { display: inline-block; background: rgba(232,200,74,0.12); border: 1px solid var(--accent); border-radius: 3px; font-size: 10px; letter-spacing: 2px; color: var(--accent); padding: 4px 10px; margin-top: 8px; }
+</style>
+
+<div id="app">
+  <div class="header-bar">
+    <div class="logo">EXECUTE</div>
+    <div class="streak-pill">STREAK: <span id="streak-count">0</span> 🔥</div>
+  </div>
+  <div class="rank-line">
+    <span id="rank-label">RECRUIT</span>
+    <span id="xp-label">0 / 100 XP</span>
+  </div>
+  <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+
+  <div id="setup-screen" class="active">
+    <div class="field-group">
+      <div class="directive-label">MISSION OBJECTIVE — what exactly will be finished?</div>
+      <textarea id="objective" rows="3" placeholder="e.g. Solve 5 Gauss Law problems — not 'study physics'"></textarea>
+      <div class="error-msg" id="obj-error"></div>
+    </div>
+    <div class="field-group measure-row">
+      <div>
+        <div class="directive-label">DONE WHEN…</div>
+        <input type="text" id="done-when" placeholder="e.g. 5 problems solved" />
+        <div class="error-msg" id="done-error"></div>
+      </div>
+      <div>
+        <div class="directive-label">SESSION COUNT TODAY</div>
+        <input type="text" id="session-count-input" placeholder="" style="color:var(--muted);" readonly />
+      </div>
+    </div>
+    <div class="field-group">
+      <div class="directive-label">TIMER — minutes</div>
+      <div class="duration-options">
+        <button class="dur-btn" onclick="selectDur(15,this)">15</button>
+        <button class="dur-btn" onclick="selectDur(25,this)">25</button>
+        <button class="dur-btn selected" onclick="selectDur(30,this)">30</button>
+        <button class="dur-btn" onclick="selectDur(45,this)">45</button>
+        <button class="dur-btn" onclick="selectDur(60,this)">60</button>
+        <button class="dur-btn" onclick="selectDur(90,this)">90</button>
+      </div>
+    </div>
+    <div class="constraints-box">
+      <div class="c-title">Rules — non-negotiable</div>
+      <div class="constraint-item">No switching tasks once you begin</div>
+      <div class="constraint-item">No checking phone during session</div>
+      <div class="constraint-item">No stopping early unless fully finished</div>
+      <div class="constraint-item">Early quit = restart full session, no exceptions</div>
+      <div class="constraint-item">Finish early = continue improving / reviewing</div>
+    </div>
+    <button class="execute-btn" onclick="startCountdown()">EXECUTE NOW</button>
+  </div>
+
+  <div id="countdown-screen">
+    <div class="countdown-label">beginning in</div>
+    <div class="countdown-num" id="countdown-num">5</div>
+    <div class="countdown-label">no stopping now</div>
+  </div>
+
+  <div id="session-screen">
+    <div class="session-header">
+      <div>
+        <div class="mission-tag">active mission</div>
+        <div class="mission-text" id="session-obj-display"></div>
+      </div>
+      <div class="sessions-done">
+        <span id="sessions-done-count">0</span>
+        sessions done
+      </div>
+    </div>
+    <div class="timer-wrap">
+      <div class="timer-display" id="timer-display">30:00</div>
+      <div class="phase-label" id="phase-label">FOCUS</div>
+      <div id="paused-badge" style="display:none"><span class="paused-badge">PAUSED</span></div>
+    </div>
+    <div class="session-controls">
+      <button class="ctrl-btn" id="pause-btn" onclick="togglePause()">⏸ PAUSE</button>
+      <button class="ctrl-btn abort-btn" onclick="showAbort()">✕ QUIT</button>
+    </div>
+    <div class="rules-reminder">
+      <div class="r"><span class="dot">■</span> no switching tasks</div>
+      <div class="r"><span class="dot">■</span> phone face down</div>
+      <div class="r"><span class="dot">■</span> finish or restart</div>
+    </div>
+  </div>
+
+  <div id="abort-screen">
+    <div class="abort-big">ABORTED</div>
+    <div class="abort-sub">You quit early.<br>This is a full restart. No partial credit.</div>
+    <div class="penalty-box">PENALTY: Streak reset to 0<br>RULE: A session only counts if completed.<br>Begin again immediately.</div>
+    <button class="restart-btn" onclick="restartFromAbort()">RESTART FULL SESSION</button>
+  </div>
+
+  <div id="complete-screen">
+    <div id="complete-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const RANKS = [
+  {name:'RECRUIT',xp:0},{name:'SOLDIER',xp:100},{name:'SPECIALIST',xp:250},
+  {name:'SERGEANT',xp:500},{name:'LIEUTENANT',xp:900},{name:'CAPTAIN',xp:1400},
+  {name:'COMMANDER',xp:2000},{name:'OPERATIVE',xp:3000},{name:'ELITE',xp:4500},{name:'LEGEND',xp:6500}
+];
+
+const LS = {
+  get: k => { try { return localStorage.getItem(k); } catch(e) { return null; } },
+  set: (k,v) => { try { localStorage.setItem(k,v); } catch(e) {} },
+  del: k => { try { localStorage.removeItem(k); } catch(e) {} }
+};
+
+const today = new Date().toDateString();
+if (LS.get('exe_last_day') !== today) {
+  LS.set('exe_sessions_today','0');
+  LS.set('exe_last_day', today);
+}
+
+let state = {
+  xp: parseInt(LS.get('exe_xp')||'0'),
+  streak: parseInt(LS.get('exe_streak')||'0'),
+  sessionsToday: parseInt(LS.get('exe_sessions_today')||'0'),
+  totalSessions: parseInt(LS.get('exe_total')||'0'),
+};
+
+let selectedDur = 30;
+let tickInterval = null;
+let paused = false;
+let pausedAt = null;
+let sessionObjective = '';
+let sessionDoneWhen = '';
+let breakInterval = null;
+let abortPenaltyApplied = false;
+
+// Clock-based timer state
+// endTime = absolute ms when session ends (accounting for pauses)
+// pausedRemaining = ms left when paused
+
+function saveTimerState(endTime, pausedRemaining, isBreak) {
+  LS.set('exe_timer_end', endTime ? String(endTime) : '');
+  LS.set('exe_timer_paused_rem', pausedRemaining != null ? String(pausedRemaining) : '');
+  LS.set('exe_timer_paused', paused ? '1' : '0');
+  LS.set('exe_timer_is_break', isBreak ? '1' : '0');
+  LS.set('exe_timer_objective', sessionObjective);
+  LS.set('exe_timer_done_when', sessionDoneWhen);
+  LS.set('exe_timer_dur', String(selectedDur));
+  LS.set('exe_timer_active', '1');
+}
+
+function clearTimerState() {
+  ['exe_timer_end','exe_timer_paused_rem','exe_timer_paused','exe_timer_is_break',
+   'exe_timer_objective','exe_timer_done_when','exe_timer_dur','exe_timer_active'].forEach(k => LS.del(k));
+}
+
+function getRemainingMs(endTime) {
+  return Math.max(0, endTime - Date.now());
+}
+
+function getRank(xp) {
+  let r = RANKS[0];
+  for (let rank of RANKS) { if (xp >= rank.xp) r = rank; }
+  return r;
+}
+
+function getNextRank(xp) {
+  for (let r of RANKS) { if (xp < r.xp) return r; }
+  return null;
+}
+
+function updateUI() {
+  const rank = getRank(state.xp);
+  const next = getNextRank(state.xp);
+  document.getElementById('streak-count').textContent = state.streak;
+  document.getElementById('rank-label').textContent = rank.name;
+  document.getElementById('sessions-done-count').textContent = state.sessionsToday;
+  document.getElementById('session-count-input').value = state.sessionsToday + ' today';
+  if (next) {
+    const pct = Math.round(((state.xp - rank.xp) / (next.xp - rank.xp)) * 100);
+    document.getElementById('xp-label').textContent = state.xp + ' / ' + next.xp + ' XP';
+    document.getElementById('xp-bar').style.width = pct + '%';
+  } else {
+    document.getElementById('xp-label').textContent = state.xp + ' XP — MAX RANK';
+    document.getElementById('xp-bar').style.width = '100%';
+  }
+}
+
+function saveState() {
+  LS.set('exe_xp', state.xp);
+  LS.set('exe_streak', state.streak);
+  LS.set('exe_sessions_today', state.sessionsToday);
+  LS.set('exe_last_day', today);
+  LS.set('exe_total', state.totalSessions);
+}
+
+function selectDur(mins, btn) {
+  selectedDur = mins;
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function showScreen(id) {
+  ['setup-screen','countdown-screen','session-screen','abort-screen','complete-screen'].forEach(s => {
+    const el = document.getElementById(s);
+    el.classList.remove('active');
+    el.style.display = '';
+  });
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  el.classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+function formatTime(ms) {
+  const totalSec = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function startCountdown() {
+  const obj = document.getElementById('objective').value.trim();
+  const done = document.getElementById('done-when').value.trim();
+  let valid = true;
+  if (!obj) { document.getElementById('obj-error').textContent = 'You must define your objective.'; valid = false; }
+  else { document.getElementById('obj-error').textContent = ''; }
+  if (!done) { document.getElementById('done-error').textContent = 'You must define done.'; valid = false; }
+  else { document.getElementById('done-error').textContent = ''; }
+  if (!valid) return;
+  sessionObjective = obj;
+  sessionDoneWhen = done;
+  showScreen('countdown-screen');
+  let count = 5;
+  document.getElementById('countdown-num').textContent = count;
+  const iv = setInterval(() => {
+    count--;
+    if (count <= 0) { clearInterval(iv); startSession(); }
+    else document.getElementById('countdown-num').textContent = count;
+  }, 1000);
+}
+
+function startSession(resumeEndTime, resumePausedRem, resumePaused) {
+  if (tickInterval) clearInterval(tickInterval);
+  if (breakInterval) clearInterval(breakInterval);
+  paused = resumePaused || false;
+  abortPenaltyApplied = false;
+
+  let endTime;
+  let pausedRemaining = null;
+
+  if (resumeEndTime) {
+    endTime = resumeEndTime;
+    pausedRemaining = resumePausedRem;
+  } else {
+    endTime = Date.now() + selectedDur * 60 * 1000;
+  }
+
+  document.getElementById('session-obj-display').textContent = sessionObjective;
+  showScreen('session-screen');
+  updateUI();
+
+  if (paused && pausedRemaining != null) {
+    document.getElementById('timer-display').textContent = formatTime(pausedRemaining);
+    document.getElementById('pause-btn').textContent = '▶ RESUME';
+    document.getElementById('paused-badge').style.display = 'block';
+    setTimerColor(pausedRemaining / (selectedDur * 60 * 1000));
+  }
+
+  saveTimerState(endTime, pausedRemaining, false);
+
+  function tick() {
+    if (paused) return;
+    const rem = getRemainingMs(endTime);
+    document.getElementById('timer-display').textContent = formatTime(rem);
+    setTimerColor(rem / (selectedDur * 60 * 1000));
+    saveTimerState(endTime, null, false);
+    if (rem <= 0) {
+      clearInterval(tickInterval);
+      clearTimerState();
+      sessionComplete();
+    }
+  }
+
+  tickInterval = setInterval(tick, 500);
+  tick();
+
+  // Store endTime in closure for pause/resume
+  window._sessionEndTime = endTime;
+  window._sessionTotalMs = selectedDur * 60 * 1000;
+}
+
+function setTimerColor(pct) {
+  const d = document.getElementById('timer-display');
+  if (pct < 0.1) d.className = 'timer-display critical';
+  else if (pct < 0.25) d.className = 'timer-display warning';
+  else d.className = 'timer-display';
+}
+
+function togglePause() {
+  if (!paused) {
+    paused = true;
+    pausedAt = Date.now();
+    const rem = getRemainingMs(window._sessionEndTime);
+    saveTimerState(window._sessionEndTime, rem, true);
+    document.getElementById('pause-btn').textContent = '▶ RESUME';
+    document.getElementById('paused-badge').style.display = 'block';
+    showToast('PAUSED — only for emergencies');
+  } else {
+    paused = false;
+    const pauseDuration = Date.now() - pausedAt;
+    window._sessionEndTime += pauseDuration;
+    saveTimerState(window._sessionEndTime, null, false);
+    document.getElementById('pause-btn').textContent = '⏸ PAUSE';
+    document.getElementById('paused-badge').style.display = 'none';
+    pausedAt = null;
+  }
+}
+
+function showAbort() {
+  if (tickInterval) clearInterval(tickInterval);
+  clearTimerState();
+  if (!abortPenaltyApplied) {
+    state.streak = 0;
+    abortPenaltyApplied = true;
+    saveState();
+  }
+  showScreen('abort-screen');
+}
+
+function restartFromAbort() {
+  showScreen('setup-screen');
+  document.getElementById('objective').value = sessionObjective;
+  document.getElementById('done-when').value = sessionDoneWhen;
+  updateUI();
+}
+
+function sessionComplete() {
+  const xpGained = Math.round(selectedDur * 2 + state.streak * 5);
+  const oldRank = getRank(state.xp);
+  state.xp += xpGained;
+  state.streak++;
+  state.sessionsToday++;
+  state.totalSessions++;
+  saveState();
+  const newRank = getRank(state.xp);
+  const rankUp = newRank.name !== oldRank.name;
+
+  showScreen('complete-screen');
+  document.getElementById('complete-content').innerHTML = `
+    <div class="complete-big">${rankUp ? 'RANK UP!' : 'COMPLETE'}</div>
+    <div class="xp-gained">+${xpGained} XP ${rankUp ? '— now ' + newRank.name : ''}</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val">${state.streak}</div><div class="stat-label">streak</div></div>
+      <div class="stat-card"><div class="stat-val">${state.sessionsToday}</div><div class="stat-label">today</div></div>
+      <div class="stat-card"><div class="stat-val">${state.xp}</div><div class="stat-label">total xp</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);letter-spacing:1.5px;margin-bottom:1.5rem;line-height:2;">
+      DONE WHEN: <span style="color:var(--text)">${sessionDoneWhen}</span><br>
+      Did you actually finish? If not — continue working.
+    </div>
+    <div class="next-actions">
+      <button class="next-btn primary" onclick="startBreak(5)">▶ TAKE 5 MIN BREAK</button>
+      <button class="next-btn" onclick="skipBreak()">↪ SKIP BREAK — NEXT SESSION NOW</button>
+      <button class="next-btn" onclick="newMission()">✦ NEW MISSION</button>
+    </div>
+  `;
+  updateUI();
+}
+
+function startBreak(mins) {
+  const breakEndTime = Date.now() + mins * 60 * 1000;
+  saveTimerState(breakEndTime, null, false);
+  LS.set('exe_timer_is_break', '1');
+
+  showScreen('complete-screen');
+  document.getElementById('complete-content').innerHTML = `
+    <div class="break-screen">
+      <div class="break-label">BREAK — step away from screen</div>
+      <div class="break-timer" id="break-display">05:00</div>
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1.5px;margin-bottom:2rem;">
+        Stand up. Hydrate. Breathe.<br>No phone. No social media.
+      </div>
+      <button class="next-btn" onclick="skipBreak()" style="max-width:280px;margin:0 auto;display:block;">↪ SKIP — START NOW</button>
+    </div>
+  `;
+
+  function breakTick() {
+    const rem = getRemainingMs(breakEndTime);
+    const el = document.getElementById('break-display');
+    if (el) el.textContent = formatTime(rem);
+    if (rem <= 0) {
+      clearInterval(breakInterval);
+      clearTimerState();
+      nextSession();
+    }
+  }
+
+  breakInterval = setInterval(breakTick, 500);
+  breakTick();
+}
+
+function skipBreak() {
+  if (breakInterval) clearInterval(breakInterval);
+  clearTimerState();
+  nextSession();
+}
+
+function nextSession() {
+  showScreen('countdown-screen');
+  let count = 5;
+  document.getElementById('countdown-num').textContent = count;
+  const iv = setInterval(() => {
+    count--;
+    if (count <= 0) { clearInterval(iv); startSession(); }
+    else document.getElementById('countdown-num').textContent = count;
+  }, 1000);
+}
+
+function newMission() {
+  sessionObjective = '';
+  sessionDoneWhen = '';
+  clearTimerState();
+  document.getElementById('objective').value = '';
+  document.getElementById('done-when').value = '';
+  showScreen('setup-screen');
+  updateUI();
+}
+
+// On load: check if a session was in progress
+function checkResumeOnLoad() {
+  if (LS.get('exe_timer_active') !== '1') return;
+  const endTime = parseInt(LS.get('exe_timer_end') || '0');
+  const pausedRem = LS.get('exe_timer_paused_rem');
+  const wasPaused = LS.get('exe_timer_paused') === '1';
+  const isBreak = LS.get('exe_timer_is_break') === '1';
+  const obj = LS.get('exe_timer_objective') || '';
+  const doneWhen = LS.get('exe_timer_done_when') || '';
+  const dur = parseInt(LS.get('exe_timer_dur') || '30');
+
+  if (!endTime) return;
+
+  sessionObjective = obj;
+  sessionDoneWhen = doneWhen;
+  selectedDur = dur;
+
+  if (isBreak) {
+    const rem = getRemainingMs(endTime);
+    if (rem <= 0) {
+      clearTimerState();
+      nextSession();
+    } else {
+      startBreak(0);
+    }
+    return;
+  }
+
+  if (!wasPaused && getRemainingMs(endTime) <= 0) {
+    clearTimerState();
+    sessionComplete();
+    return;
+  }
+
+  const pausedRemMs = pausedRem ? parseInt(pausedRem) : null;
+  startSession(endTime, pausedRemMs, wasPaused);
+}
+
+// Page visibility: re-sync timer when tab becomes visible again
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && LS.get('exe_timer_active') === '1') {
+    const endTime = parseInt(LS.get('exe_timer_end') || '0');
+    const wasPaused = LS.get('exe_timer_paused') === '1';
+    if (!wasPaused && endTime && getRemainingMs(endTime) <= 0) {
+      if (tickInterval) clearInterval(tickInterval);
+      clearTimerState();
+      sessionComplete();
+    }
+  }
+});
+
+updateUI();
+checkResumeOnLoad();
+</script>
