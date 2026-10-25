@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>COMMAND CENTER — HQ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0a; --surface: #111; --border: #222; --accent: #e8c84a;
+    --accent2: #ff4b4b; --text: #f0ede6; --muted: #666; --green: #3dd68c;
+    --mono: 'Space Mono', monospace; --display: 'Bebas Neue', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; }
+  #app { max-width: 760px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  /* HEADER */
+  .header-bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.25rem; gap: 10px; }
+  .logo { font-family: var(--display); font-size: 26px; letter-spacing: 3px; color: var(--accent); }
+  .logo small { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-top: 2px; }
+  .nav-link { background: #1a1a1a; border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 11px; color: var(--muted); letter-spacing: 1px; text-decoration: none; transition: all 0.15s; white-space: nowrap; }
+  .nav-link:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SECTION */
+  .section { margin-bottom: 2.5rem; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; gap: 10px; flex-wrap: wrap; }
+  .section-title { font-family: var(--display); font-size: 22px; letter-spacing: 3px; color: var(--text); }
+  .section-title .tag { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--accent2); display: block; margin-bottom: 2px; }
+  .directive-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+
+  /* STAT TILES */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stat-card { background: #111; border: 1px solid var(--border); border-radius: 4px; padding: 14px 10px; text-align: center; }
+  .stat-val { font-family: var(--display); font-size: 34px; color: var(--text); letter-spacing: 2px; line-height: 1; }
+  .stat-val.accent { color: var(--accent); }
+  .stat-val.green { color: var(--green); }
+  .stat-label { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 6px; }
+
+  /* FORMS */
+  .field-group { margin-bottom: 1rem; }
+  textarea, input[type="text"], input[type="date"], select {
+    width: 100%; background: #111; border: 1px solid var(--border); color: var(--text);
+    font-family: var(--mono); font-size: 13px; padding: 11px; border-radius: 4px; resize: none;
+    outline: none; transition: border-color 0.2s; line-height: 1.6;
+  }
+  textarea:focus, input:focus, select:focus { border-color: var(--accent); }
+  input[type="date"] { color-scheme: dark; }
+  select { cursor: pointer; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 16px) 16px, calc(100% - 11px) 16px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+  .error-msg { font-size: 11px; color: var(--accent2); letter-spacing: 1px; margin-top: 4px; min-height: 14px; }
+
+  .panel { background: #111; border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 1rem; }
+  .panel.alt-border { border-left: 3px solid var(--accent2); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* BUTTONS */
+  .btn { background: #1a1a1a; border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 12px; letter-spacing: 1px; padding: 10px 14px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #0a0a0a; border: none; font-family: var(--display); font-size: 18px; letter-spacing: 3px; padding: 12px; width: 100%; }
+  .btn.primary:hover { background: #f5d660; transform: translateY(-1px); color: #0a0a0a; }
+  .btn.primary:active { transform: scale(0.99); }
+  .btn.danger { color: var(--accent2); border-color: #2a1414; }
+  .btn.danger:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn.green:hover { border-color: var(--green); color: var(--green); }
+  .btn.small { padding: 5px 9px; font-size: 10px; letter-spacing: 1px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* FILTER PILLS */
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { background: #1a1a1a; border: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: 11px; padding: 6px 12px; border-radius: 3px; cursor: pointer; letter-spacing: 1px; transition: all 0.15s; }
+  .pill:hover, .pill.selected { border-color: var(--accent); color: var(--accent); background: rgba(232,200,74,0.07); }
+
+  /* ROSTER CARDS */
+  .roster-card { background: #111; border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .roster-card.inactive { opacity: 0.5; }
+  .roster-card .r-name { font-family: var(--display); font-size: 22px; letter-spacing: 2px; color: var(--text); line-height: 1; }
+  .roster-card .r-callsign { font-size: 12px; color: var(--accent); letter-spacing: 1px; margin-top: 4px; }
+  .roster-card .r-meta { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; }
+  .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .status-dot.active { background: var(--green); }
+  .status-dot.inactive { background: var(--muted); }
+
+  /* TASK CARDS */
+  .task-card { background: #111; border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 4px; padding: 14px; margin-bottom: 10px; }
+  .task-card.prio-HIGH { border-left-color: var(--accent2); }
+  .task-card.prio-MED { border-left-color: var(--accent); }
+  .task-card.prio-LOW { border-left-color: var(--green); }
+  .task-card.done { opacity: 0.55; }
+  .task-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .task-title { font-size: 14px; color: var(--text); letter-spacing: 0.5px; font-weight: 700; line-height: 1.4; }
+  .task-card.done .task-title { text-decoration: line-through; }
+  .task-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 6px; white-space: pre-wrap; }
+  .task-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+  .badge { padding: 3px 7px; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); }
+  .badge.prio-HIGH { color: var(--accent2); border-color: #2a1414; }
+  .badge.prio-MED { color: var(--accent); border-color: #2a2614; }
+  .badge.prio-LOW { color: var(--green); border-color: #142a1e; }
+  .badge.st-ASSIGNED { color: var(--muted); }
+  .badge.st-INPROG { color: var(--accent); border-color: #2a2614; }
+  .badge.st-COMPLETE { color: var(--green); border-color: #142a1e; }
+  .badge.overdue { color: var(--accent2); border-color: #2a1414; background: rgba(255,75,75,0.07); }
+  .badge.assignee { color: var(--text); }
+  .task-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .task-group-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin: 1rem 0 0.5rem; display: flex; gap: 8px; align-items: center; }
+  .task-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ANNOUNCEMENTS */
+  .ann-card { background: #111; border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 10px; }
+  .ann-card.pinned { border-left: 3px solid var(--accent); background: rgba(232,200,74,0.03); }
+  .ann-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .ann-title { font-family: var(--display); font-size: 20px; letter-spacing: 2px; color: var(--text); line-height: 1.1; }
+  .ann-pin-tag { font-size: 9px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; }
+  .ann-body { font-size: 13px; color: var(--text); line-height: 1.7; margin-top: 8px; white-space: pre-wrap; }
+  .ann-date { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 10px; }
+
+  /* EMPTY STATE */
+  .empty-state { background: #111; border: 1px dashed var(--border); border-radius: 4px; padding: 28px 16px; text-align: center; color: var(--muted); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid var(--accent); border-radius: 3px; padding: 10px 20px; font-size: 12px; letter-spacing: 1px; color: var(--accent); opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; z-index: 100; }
+  .toast.visible { opacity: 1; }
+
+  /* MODAL (edit) */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 200; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--accent); border-radius: 6px; padding: 20px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-family: var(--display); font-size: 22px; letter-spacing: 3px; color: var(--accent); margin-bottom: 1rem; }
+
+  @media (max-width: 560px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .roster-card { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header-bar">
+    <div class="logo">COMMAND CENTER<small>HQ — SQUAD OPERATIONS</small></div>
+    <a class="nav-link" href="index.html">◂ LAUNCH TIMER</a>
+  </div>
+
+  <!-- OVERVIEW / STATUS BAR -->
+  <div class="section">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val accent" id="stat-squad">0</div><div class="stat-label">Squad Size</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-open">0</div><div class="stat-label">Open Tasks</div></div>
+      <div class="stat-card"><div class="stat-val green" id="stat-done">0</div><div class="stat-label">Completed</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-brief" style="font-size:18px;">—</div><div class="stat-label">Latest Briefing</div></div>
+    </div>
+  </div>
+
+  <!-- ROSTER -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="tag">PERSONNEL</span>ROSTER — SQUAD</div>
+    </div>
+    <div class="panel alt-border">
+      <div class="directive-label">ENLIST RECRUIT</div>
+      <div class="grid-2">
+        <input type="text" id="m-name" placeholder="NAME (required)" maxlength="40" />
+        <input type="text" id="m-callsign" placeholder="ROLE / CALLSIGN" maxlength="40" />
+      </div>
+      <div class="grid-2" style="margin-top:10px;">
+        <select id="m-rank"></select>
+        <select id="m-status">
+          <option value="active">ACTIVE</option>
+          <option value="inactive">INACTIVE</option>
+        </select>
+      </div>
+      <div class="error-msg" id="m-error"></div>
+      <button class="btn primary" id="m-add-btn" onclick="addMember()">+ ENLIST</button>
+    </div>
+    <div id="roster-list"></div>
+  </div>
+
+  <!-- TASK BOARD -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="tag">OPERATIONS</span>TASK BOARD</div>
+    </div>
+    <div class="panel alt-border">
+      <div class="directive-label">NEW OBJECTIVE</div>
+      <div class="field-group">
+        <input type="text" id="t-title" placeholder="OBJECTIVE TITLE (required)" maxlength="120" />
+      </div>
+      <div class="field-group">
+        <textarea id="t-desc" rows="2" placeholder="BRIEFING / DESCRIPTION (optional)" maxlength="500"></textarea>
+      </div>
+      <div class="grid-3">
+        <select id="t-assignee"></select>
+        <select id="t-priority">
+          <option value="LOW">LOW</option>
+          <option value="MED" selected>MED</option>
+          <option value="HIGH">HIGH</option>
+        </select>
+        <input type="date" id="t-due" />
+      </div>
+      <div class="error-msg" id="t-error"></div>
+      <button class="btn primary" id="t-add-btn" onclick="addTask()">+ DEPLOY TASK</button>
+    </div>
+    <div class="field-group">
+      <div class="directive-label">FILTER BY STATUS</div>
+      <div class="filter-row" id="task-filters">
+        <button class="pill selected" data-filter="ALL" onclick="setTaskFilter('ALL',this)">ALL</button>
+        <button class="pill" data-filter="ASSIGNED" onclick="setTaskFilter('ASSIGNED',this)">ASSIGNED</button>
+        <button class="pill" data-filter="INPROG" onclick="setTaskFilter('INPROG',this)">IN PROGRESS</button>
+        <button class="pill" data-filter="COMPLETE" onclick="setTaskFilter('COMPLETE',this)">COMPLETE</button>
+      </div>
+    </div>
+    <div id="task-list"></div>
+  </div>
+
+  <!-- ANNOUNCEMENTS -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="tag">INTEL</span>BRIEFINGS</div>
+    </div>
+    <div class="panel alt-border">
+      <div class="directive-label">POST BRIEFING</div>
+      <div class="field-group">
+        <input type="text" id="a-title" placeholder="BRIEFING TITLE (required)" maxlength="80" />
+      </div>
+      <div class="field-group">
+        <textarea id="a-body" rows="3" placeholder="MESSAGE TO SQUAD (required)" maxlength="1000"></textarea>
+      </div>
+      <div class="error-msg" id="a-error"></div>
+      <button class="btn primary" id="a-add-btn" onclick="addAnnouncement()">+ TRANSMIT</button>
+    </div>
+    <div id="ann-list"></div>
+  </div>
+
+  <div style="text-align:center;margin-top:2rem;">
+    <a class="nav-link" href="index.html">◂ BACK TO EXECUTE</a>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+const RANKS = [
+  {name:'RECRUIT',xp:0},{name:'SOLDIER',xp:100},{name:'SPECIALIST',xp:250},
+  {name:'SERGEANT',xp:500},{name:'LIEUTENANT',xp:900},{name:'CAPTAIN',xp:1400},
+  {name:'COMMANDER',xp:2000},{name:'OPERATIVE',xp:3000},{name:'ELITE',xp:4500},{name:'LEGEND',xp:6500}
+];
+
+const LS = {
+  get: k => { try { return localStorage.getItem(k); } catch(e) { return null; } },
+  set: (k,v) => { try { localStorage.setItem(k,v); } catch(e) {} },
+  del: k => { try { localStorage.removeItem(k); } catch(e) {} }
+};
+
+// ---- persisted collections ----
+function load(key) {
+  try { return JSON.parse(LS.get(key) || '[]'); } catch(e) { return []; }
+}
+function save(key, arr) { LS.set(key, JSON.stringify(arr)); }
+
+let roster = load('hq_roster');
+let tasks = load('hq_tasks');
+let announcements = load('hq_announcements');
+
+let taskFilter = 'ALL';
+
+// ---- helpers ----
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+function esc(str) {
+  // returns HTML-escaped string (for use where textContent isn't practical)
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'}) +
+    ' ' + d.toLocaleTimeString(undefined, {hour:'2-digit',minute:'2-digit'});
+}
+
+function fmtDueLabel(dateStr) {
+  // dateStr is YYYY-MM-DD
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+}
+
+function isOverdue(task) {
+  if (!task.due || task.status === 'COMPLETE') return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due = new Date(task.due + 'T00:00:00');
+  return due < today;
+}
+
+const STATUS_META = {
+  ASSIGNED: {label:'ASSIGNED', cls:'st-ASSIGNED'},
+  INPROG:   {label:'IN PROGRESS', cls:'st-INPROG'},
+  COMPLETE: {label:'COMPLETE', cls:'st-COMPLETE'}
+};
+
+// =============== RANK DROPDOWN ===============
+function populateRankSelect(sel, selected) {
+  sel.innerHTML = '';
+  RANKS.forEach(r => {
+    const o = document.createElement('option');
+    o.value = r.name; o.textContent = r.name;
+    if (r.name === selected) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+// =============== STATS ===============
+function renderStats() {
+  document.getElementById('stat-squad').textContent = roster.length;
+  const open = tasks.filter(t => t.status !== 'COMPLETE').length;
+  const done = tasks.filter(t => t.status === 'COMPLETE').length;
+  document.getElementById('stat-open').textContent = open;
+  document.getElementById('stat-done').textContent = done;
+  const latest = announcements.length
+    ? announcements.slice().sort((a,b) => b.created - a.created)[0]
+    : null;
+  const briefEl = document.getElementById('stat-brief');
+  if (latest) {
+    briefEl.textContent = new Date(latest.created).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    briefEl.style.fontSize = '22px';
+  } else {
+    briefEl.textContent = '—';
+    briefEl.style.fontSize = '22px';
+  }
+}
+
+// =============== ROSTER ===============
+function addMember() {
+  const name = document.getElementById('m-name').value.trim();
+  const errEl = document.getElementById('m-error');
+  if (!name) { errEl.textContent = 'Recruit requires a name.'; return; }
+  errEl.textContent = '';
+  roster.push({
+    id: uid(),
+    name,
+    callsign: document.getElementById('m-callsign').value.trim(),
+    rank: document.getElementById('m-rank').value,
+    status: document.getElementById('m-status').value
+  });
+  save('hq_roster', roster);
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-callsign').value = '';
+  document.getElementById('m-rank').selectedIndex = 0;
+  document.getElementById('m-status').selectedIndex = 0;
+  renderAll();
+  showToast('RECRUIT ENLISTED');
+}
+
+function removeMember(id) {
+  const m = roster.find(r => r.id === id);
+  if (!m) return;
+  if (!confirm('Discharge "' + m.name + '" from the squad? This cannot be undone.')) return;
+  roster = roster.filter(r => r.id !== id);
+  // unassign their tasks
+  tasks.forEach(t => { if (t.assignee === id) t.assignee = ''; });
+  save('hq_roster', roster);
+  save('hq_tasks', tasks);
+  renderAll();
+  showToast('RECRUIT DISCHARGED');
+}
+
+function toggleMemberStatus(id) {
+  const m = roster.find(r => r.id === id);
+  if (!m) return;
+  m.status = m.status === 'active' ? 'inactive' : 'active';
+  save('hq_roster', roster);
+  renderAll();
+}
+
+function editMember(id) {
+  const m = roster.find(r => r.id === id);
+  if (!m) return;
+  openModal('EDIT RECRUIT', `
+    <div class="field-group"><div class="directive-label">NAME</div>
+      <input type="text" id="edit-m-name" maxlength="40" value="${esc(m.name)}" /></div>
+    <div class="field-group"><div class="directive-label">ROLE / CALLSIGN</div>
+      <input type="text" id="edit-m-callsign" maxlength="40" value="${esc(m.callsign)}" /></div>
+    <div class="grid-2">
+      <div><div class="directive-label">RANK</div><select id="edit-m-rank"></select></div>
+      <div><div class="directive-label">STATUS</div><select id="edit-m-status">
+        <option value="active">ACTIVE</option><option value="inactive">INACTIVE</option>
+      </select></div>
+    </div>
+    <div class="error-msg" id="edit-m-error"></div>
+    <div class="btn-row" style="margin-top:1rem;">
+      <button class="btn green" style="flex:1" onclick="saveMemberEdit('${m.id}')">SAVE</button>
+      <button class="btn" onclick="closeModal()">CANCEL</button>
+    </div>
+  `);
+  populateRankSelect(document.getElementById('edit-m-rank'), m.rank);
+  document.getElementById('edit-m-status').value = m.status;
+}
+
+function saveMemberEdit(id) {
+  const m = roster.find(r => r.id === id);
+  if (!m) return;
+  const name = document.getElementById('edit-m-name').value.trim();
+  if (!name) { document.getElementById('edit-m-error').textContent = 'Name required.'; return; }
+  m.name = name;
+  m.callsign = document.getElementById('edit-m-callsign').value.trim();
+  m.rank = document.getElementById('edit-m-rank').value;
+  m.status = document.getElementById('edit-m-status').value;
+  save('hq_roster', roster);
+  closeModal();
+  renderAll();
+  showToast('RECRUIT UPDATED');
+}
+
+function renderRoster() {
+  const wrap = document.getElementById('roster-list');
+  wrap.innerHTML = '';
+  if (!roster.length) {
+    wrap.appendChild(el('div', 'empty-state', 'NO RECRUITS ON ROSTER — ENLIST YOUR SQUAD'));
+    return;
+  }
+  roster.forEach(m => {
+    const card = el('div', 'roster-card' + (m.status === 'inactive' ? ' inactive' : ''));
+    const left = el('div');
+    left.appendChild(el('div', 'r-name', m.name));
+    if (m.callsign) left.appendChild(el('div', 'r-callsign', m.callsign));
+    const meta = el('div', 'r-meta');
+    const dot = el('span', 'status-dot ' + (m.status === 'active' ? 'active' : 'inactive'));
+    meta.appendChild(dot);
+    meta.appendChild(document.createTextNode((m.rank || 'RECRUIT') + ' — ' + (m.status === 'active' ? 'ACTIVE' : 'INACTIVE')));
+    left.appendChild(meta);
+    card.appendChild(left);
+
+    const actions = el('div', 'btn-row');
+    const tBtn = el('button', 'btn small', m.status === 'active' ? 'STAND DOWN' : 'ACTIVATE');
+    tBtn.onclick = () => toggleMemberStatus(m.id);
+    const eBtn = el('button', 'btn small', 'EDIT');
+    eBtn.onclick = () => editMember(m.id);
+    const dBtn = el('button', 'btn small danger', 'DISCHARGE');
+    dBtn.onclick = () => removeMember(m.id);
+    actions.appendChild(tBtn); actions.appendChild(eBtn); actions.appendChild(dBtn);
+    card.appendChild(actions);
+    wrap.appendChild(card);
+  });
+}
+
+// =============== TASK BOARD ===============
+function populateAssigneeSelect(sel, selected) {
+  sel.innerHTML = '';
+  const un = document.createElement('option');
+  un.value = ''; un.textContent = 'UNASSIGNED';
+  sel.appendChild(un);
+  roster.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.id;
+    o.textContent = m.name + (m.callsign ? ' (' + m.callsign + ')' : '');
+    if (m.id === selected) o.selected = true;
+    sel.appendChild(o);
+  });
+  if (selected) sel.value = selected;
+}
+
+function assigneeName(id) {
+  if (!id) return 'UNASSIGNED';
+  const m = roster.find(r => r.id === id);
+  return m ? m.name : 'UNASSIGNED';
+}
+
+function addTask() {
+  const title = document.getElementById('t-title').value.trim();
+  const errEl = document.getElementById('t-error');
+  if (!title) { errEl.textContent = 'Objective requires a title.'; return; }
+  errEl.textContent = '';
+  tasks.push({
+    id: uid(),
+    title,
+    desc: document.getElementById('t-desc').value.trim(),
+    assignee: document.getElementById('t-assignee').value,
+    priority: document.getElementById('t-priority').value,
+    due: document.getElementById('t-due').value || '',
+    status: 'ASSIGNED',
+    created: Date.now()
+  });
+  save('hq_tasks', tasks);
+  document.getElementById('t-title').value = '';
+  document.getElementById('t-desc').value = '';
+  document.getElementById('t-due').value = '';
+  document.getElementById('t-priority').value = 'MED';
+  document.getElementById('t-assignee').value = '';
+  renderAll();
+  showToast('TASK DEPLOYED');
+}
+
+function removeTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  if (!confirm('Scrub task "' + t.title + '"? This cannot be undone.')) return;
+  tasks = tasks.filter(x => x.id !== id);
+  save('hq_tasks', tasks);
+  renderAll();
+  showToast('TASK SCRUBBED');
+}
+
+function setTaskStatus(id, status) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = status;
+  save('hq_tasks', tasks);
+  renderAll();
+}
+
+function editTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  openModal('EDIT TASK', `
+    <div class="field-group"><div class="directive-label">TITLE</div>
+      <input type="text" id="edit-t-title" maxlength="120" value="${esc(t.title)}" /></div>
+    <div class="field-group"><div class="directive-label">BRIEFING</div>
+      <textarea id="edit-t-desc" rows="2" maxlength="500">${esc(t.desc)}</textarea></div>
+    <div class="grid-3">
+      <div><div class="directive-label">ASSIGNEE</div><select id="edit-t-assignee"></select></div>
+      <div><div class="directive-label">PRIORITY</div><select id="edit-t-priority">
+        <option value="LOW">LOW</option><option value="MED">MED</option><option value="HIGH">HIGH</option>
+      </select></div>
+      <div><div class="directive-label">DUE</div><input type="date" id="edit-t-due" value="${esc(t.due)}" /></div>
+    </div>
+    <div class="error-msg" id="edit-t-error"></div>
+    <div class="btn-row" style="margin-top:1rem;">
+      <button class="btn green" style="flex:1" onclick="saveTaskEdit('${t.id}')">SAVE</button>
+      <button class="btn" onclick="closeModal()">CANCEL</button>
+    </div>
+  `);
+  populateAssigneeSelect(document.getElementById('edit-t-assignee'), t.assignee);
+  document.getElementById('edit-t-priority').value = t.priority;
+}
+
+function saveTaskEdit(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  const title = document.getElementById('edit-t-title').value.trim();
+  if (!title) { document.getElementById('edit-t-error').textContent = 'Title required.'; return; }
+  t.title = title;
+  t.desc = document.getElementById('edit-t-desc').value.trim();
+  t.assignee = document.getElementById('edit-t-assignee').value;
+  t.priority = document.getElementById('edit-t-priority').value;
+  t.due = document.getElementById('edit-t-due').value || '';
+  save('hq_tasks', tasks);
+  closeModal();
+  renderAll();
+  showToast('TASK UPDATED');
+}
+
+function setTaskFilter(f, btn) {
+  taskFilter = f;
+  document.querySelectorAll('#task-filters .pill').forEach(p => p.classList.remove('selected'));
+  btn.classList.add('selected');
+  renderTasks();
+}
+
+function buildTaskCard(t) {
+  const card = el('div', 'task-card prio-' + t.priority + (t.status === 'COMPLETE' ? ' done' : ''));
+
+  const top = el('div', 'task-top');
+  top.appendChild(el('div', 'task-title', t.title));
+  card.appendChild(top);
+
+  if (t.desc) card.appendChild(el('div', 'task-desc', t.desc));
+
+  const meta = el('div', 'task-meta');
+  meta.appendChild(el('span', 'badge assignee', '◈ ' + assigneeName(t.assignee)));
+  meta.appendChild(el('span', 'badge prio-' + t.priority, t.priority));
+  const sm = STATUS_META[t.status];
+  meta.appendChild(el('span', 'badge ' + sm.cls, sm.label));
+  if (t.due) {
+    const overdue = isOverdue(t);
+    meta.appendChild(el('span', 'badge' + (overdue ? ' overdue' : ''),
+      (overdue ? '⚠ OVERDUE ' : 'DUE ') + fmtDueLabel(t.due)));
+  }
+  card.appendChild(meta);
+
+  const actions = el('div', 'task-actions');
+  // status change buttons
+  [['ASSIGNED','ASSIGNED'],['INPROG','IN PROGRESS'],['COMPLETE','COMPLETE']].forEach(([st,lbl]) => {
+    if (t.status === st) return;
+    const b = el('button', 'btn small' + (st === 'COMPLETE' ? ' green' : ''), '▸ ' + lbl);
+    b.onclick = () => setTaskStatus(t.id, st);
+    actions.appendChild(b);
+  });
+  const eBtn = el('button', 'btn small', 'EDIT');
+  eBtn.onclick = () => editTask(t.id);
+  const dBtn = el('button', 'btn small danger', 'DELETE');
+  dBtn.onclick = () => removeTask(t.id);
+  actions.appendChild(eBtn); actions.appendChild(dBtn);
+  card.appendChild(actions);
+  return card;
+}
+
+function renderTasks() {
+  const wrap = document.getElementById('task-list');
+  wrap.innerHTML = '';
+  if (!tasks.length) {
+    wrap.appendChild(el('div', 'empty-state', 'NO ACTIVE OBJECTIVES — DEPLOY A TASK'));
+    return;
+  }
+
+  const prioOrder = {HIGH:0, MED:1, LOW:2};
+  const sortFn = (a,b) => (prioOrder[a.priority] - prioOrder[b.priority]) || (a.created - b.created);
+
+  if (taskFilter === 'ALL') {
+    // group by status
+    const groups = [['ASSIGNED','ASSIGNED'],['INPROG','IN PROGRESS'],['COMPLETE','COMPLETE']];
+    let any = false;
+    groups.forEach(([st,lbl]) => {
+      const list = tasks.filter(t => t.status === st).sort(sortFn);
+      if (!list.length) return;
+      any = true;
+      wrap.appendChild(el('div', 'task-group-label', lbl + ' (' + list.length + ')'));
+      list.forEach(t => wrap.appendChild(buildTaskCard(t)));
+    });
+    if (!any) wrap.appendChild(el('div', 'empty-state', 'NO ACTIVE OBJECTIVES — DEPLOY A TASK'));
+  } else {
+    const list = tasks.filter(t => t.status === taskFilter).sort(sortFn);
+    if (!list.length) {
+      wrap.appendChild(el('div', 'empty-state', 'NO TASKS IN THIS STATUS'));
+      return;
+    }
+    list.forEach(t => wrap.appendChild(buildTaskCard(t)));
+  }
+}
+
+// =============== ANNOUNCEMENTS ===============
+function addAnnouncement() {
+  const title = document.getElementById('a-title').value.trim();
+  const body = document.getElementById('a-body').value.trim();
+  const errEl = document.getElementById('a-error');
+  if (!title) { errEl.textContent = 'Briefing requires a title.'; return; }
+  if (!body) { errEl.textContent = 'Briefing requires a message.'; return; }
+  errEl.textContent = '';
+  announcements.push({
+    id: uid(), title, body, pinned: false, created: Date.now()
+  });
+  save('hq_announcements', announcements);
+  document.getElementById('a-title').value = '';
+  document.getElementById('a-body').value = '';
+  renderAll();
+  showToast('BRIEFING TRANSMITTED');
+}
+
+function removeAnnouncement(id) {
+  const a = announcements.find(x => x.id === id);
+  if (!a) return;
+  if (!confirm('Delete briefing "' + a.title + '"? This cannot be undone.')) return;
+  announcements = announcements.filter(x => x.id !== id);
+  save('hq_announcements', announcements);
+  renderAll();
+  showToast('BRIEFING DELETED');
+}
+
+function togglePin(id) {
+  const a = announcements.find(x => x.id === id);
+  if (!a) return;
+  a.pinned = !a.pinned;
+  save('hq_announcements', announcements);
+  renderAll();
+}
+
+function renderAnnouncements() {
+  const wrap = document.getElementById('ann-list');
+  wrap.innerHTML = '';
+  if (!announcements.length) {
+    wrap.appendChild(el('div', 'empty-state', 'NO BRIEFINGS ON RECORD — TRANSMIT ORDERS'));
+    return;
+  }
+  const sorted = announcements.slice().sort((a,b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    return b.created - a.created;
+  });
+  sorted.forEach(a => {
+    const card = el('div', 'ann-card' + (a.pinned ? ' pinned' : ''));
+    const head = el('div', 'ann-head');
+    const titleWrap = el('div');
+    if (a.pinned) titleWrap.appendChild(el('div', 'ann-pin-tag', '📌 PINNED'));
+    titleWrap.appendChild(el('div', 'ann-title', a.title));
+    head.appendChild(titleWrap);
+    const actions = el('div', 'btn-row');
+    const pBtn = el('button', 'btn small', a.pinned ? 'UNPIN' : 'PIN');
+    pBtn.onclick = () => togglePin(a.id);
+    const dBtn = el('button', 'btn small danger', 'DELETE');
+    dBtn.onclick = () => removeAnnouncement(a.id);
+    actions.appendChild(pBtn); actions.appendChild(dBtn);
+    head.appendChild(actions);
+    card.appendChild(head);
+    card.appendChild(el('div', 'ann-body', a.body));
+    card.appendChild(el('div', 'ann-date', '▸ ' + fmtDate(a.created)));
+    wrap.appendChild(card);
+  });
+}
+
+// =============== MODAL ===============
+function openModal(title, html) {
+  const mc = document.getElementById('modal-content');
+  mc.innerHTML = '<h3>' + esc(title) + '</h3>' + html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal-content').innerHTML = '';
+}
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target.id === 'modal-overlay') closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// =============== RENDER ALL ===============
+function renderAll() {
+  renderStats();
+  renderRoster();
+  // refresh assignee dropdown in the "new task" form (preserve current selection if still valid)
+  const curAssignee = document.getElementById('t-assignee').value;
+  populateAssigneeSelect(document.getElementById('t-assignee'), curAssignee);
+  renderTasks();
+  renderAnnouncements();
+}
+
+// init
+populateRankSelect(document.getElementById('m-rank'), 'RECRUIT');
+populateAssigneeSelect(document.getElementById('t-assignee'), '');
+renderAll();
+</script>
+</body>
+</html>
